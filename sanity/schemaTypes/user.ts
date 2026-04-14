@@ -37,5 +37,10 @@ export const user = defineType({
         hotspot: true,
       },
     }),
+    defineField({
+      name: "isAdmin",
+      title: "Is Admin",
+      type: "boolean",
+    }),
   ],
 });
