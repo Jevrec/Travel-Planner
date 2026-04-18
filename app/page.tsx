@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-
+// app/page.tsx
 export default function Home() {
   return (
     <div className="m-10 flex flex-row gap-4 bg-gray-300 p-4 rounded-2xl">
