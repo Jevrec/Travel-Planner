@@ -9,7 +9,7 @@ export const user = defineType({
       name: "email",
       type: "string",
       title: "Email",
-      validation: (Rule: any) => Rule.required().email(),
+      validation: (Rule) => Rule.required().email(),
     }),
     defineField({
       name: "password",
@@ -21,7 +21,7 @@ export const user = defineType({
       name: "username",
       type: "string",
       title: "Username",
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "createdAt",

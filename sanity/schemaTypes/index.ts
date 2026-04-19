@@ -5,5 +5,5 @@ import { destination } from "./destination";
 import sentEmail from "./sentEmail";
 export const schemaTypes = [user, booking, destination, sentEmail];
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [user, booking, destination],
+  types: [user, booking, destination, sentEmail],
 };

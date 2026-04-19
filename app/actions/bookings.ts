@@ -1,11 +1,12 @@
 // app/actions/bookings.ts
 "use server";
 
-import { writeClient, client } from "@/sanity/lib/client";
 import { revalidatePath } from "next/cache";
+import { sendBookingConfirmation } from "@/app/actions/email";
+import { writeClient, client } from "@/sanity/lib/client";
 
 export async function getBookings() {
-  return await client.fetch(`
+  return client.fetch(`
     *[_type == "booking"] | order(createdAt desc) {
       _id, status, totalPrice, createdAt,
       startDate, endDate, guests, flightIncluded,
@@ -20,7 +21,7 @@ export async function getBookings() {
 }
 
 export async function getBookingById(id: string) {
-  return await client.fetch(
+  return client.fetch(
     `
     *[_type == "booking" && _id == $id][0] {
       _id, status, totalPrice, createdAt,
@@ -68,7 +69,17 @@ export async function createBooking(formData: FormData) {
 }
 
 export async function updateBookingStatus(id: string, status: string) {
+  const existing = await client.fetch(
+    `*[_type == "booking" && _id == $id][0]{ status }`,
+    { id },
+  );
+
   await writeClient.patch(id).set({ status }).commit();
+
+  if (status === "confirmed" && existing?.status !== "confirmed") {
+    await sendBookingConfirmation(id);
+  }
+
   revalidatePath("/admin/bookings");
   return { success: true };
 }
@@ -80,11 +91,19 @@ export async function updateBooking(id: string, formData: FormData) {
   const guests = parseInt(formData.get("guests") as string);
   const status = formData.get("status") as string;
   const flightIncluded = formData.get("flightIncluded") === "true";
+  const existing = await client.fetch(
+    `*[_type == "booking" && _id == $id][0]{ status }`,
+    { id },
+  );
 
   await writeClient
     .patch(id)
     .set({ startDate, endDate, totalPrice, guests, status, flightIncluded })
     .commit();
+
+  if (status === "confirmed" && existing?.status !== "confirmed") {
+    await sendBookingConfirmation(id);
+  }
 
   revalidatePath("/admin/bookings");
   return { success: true };

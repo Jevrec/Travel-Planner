@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Pencil, Trash2, Mail } from "lucide-react";
+import { sendBookingConfirmation } from "@/app/actions/email";
 import { deleteBooking, updateBookingStatus } from "@/app/actions/bookings";
 import InvoiceButton from "./InvoiceButton";
-import { sendBookingConfirmation } from "@/app/actions/email";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-700",
@@ -15,11 +15,31 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STATUSES = ["pending", "confirmed", "cancelled", "completed"];
 
+type BookingRow = {
+  _id: string;
+  status: string;
+  totalPrice: number;
+  createdAt: string;
+  startDate: string;
+  endDate: string;
+  guests: number;
+  flightIncluded: boolean;
+  customerName: string;
+  customerEmail: string;
+  customerId: string;
+  destinationName: string;
+  destinationId: string;
+  destinationCountry: string;
+};
+
 export default function BookingsTable({
-  bookings, onEdit, onDelete, onStatusChange,
+  bookings,
+  onEdit,
+  onDelete,
+  onStatusChange,
 }: {
-  bookings: any[];
-  onEdit: (b: any) => void;
+  bookings: BookingRow[];
+  onEdit: (booking: BookingRow) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: string) => void;
 }) {
@@ -27,6 +47,7 @@ export default function BookingsTable({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const handleStatusChange = async (id: string, status: string) => {
     setLoadingId(id);
@@ -43,26 +64,37 @@ export default function BookingsTable({
     setLoadingId(null);
   };
 
-  const handleSendEmail = async (booking: any) => {
-    setSendingEmail(booking._id);
-    const result = await sendBookingConfirmation(booking);
+  const handleSendEmail = async (bookingId: string) => {
+    setEmailError(null);
+    setSendingEmail(bookingId);
+    const result = await sendBookingConfirmation(bookingId);
     setSendingEmail(null);
-    if (!result.error) {
-      setEmailSent(booking._id);
-      setTimeout(() => setEmailSent(null), 3000);
+
+    if ("error" in result) {
+      setEmailError(result.error ?? "Failed to send email.");
+      return;
     }
+
+    setEmailSent(bookingId);
+    setTimeout(() => setEmailSent(null), 3000);
   };
 
   if (bookings.length === 0) {
-    return <p className="text-center text-gray-400 py-12">No bookings found.</p>;
+    return <p className="py-12 text-center text-gray-400">No bookings found.</p>;
   }
 
   return (
     <>
+      {emailError && (
+        <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {emailError}
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-gray-500 border-b text-xs uppercase tracking-wide">
+            <tr className="border-b text-left text-xs uppercase tracking-wide text-gray-500">
               <th className="pb-3 font-medium">Customer</th>
               <th className="pb-3 font-medium">Destination</th>
               <th className="pb-3 font-medium">Dates</th>
@@ -74,69 +106,81 @@ export default function BookingsTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {bookings.map((b) => (
-              <tr key={b._id} className="hover:bg-gray-50 transition">
+            {bookings.map((booking) => (
+              <tr key={booking._id} className="transition hover:bg-gray-50">
                 <td className="py-3">
-                  <p className="font-medium text-gray-800">{b.customerName || "—"}</p>
-                  <p className="text-xs text-gray-400">{b.customerEmail}</p>
+                  <p className="font-medium text-gray-800">
+                    {booking.customerName || "-"}
+                  </p>
+                  <p className="text-xs text-gray-400">{booking.customerEmail}</p>
                 </td>
                 <td className="py-3">
-                  <p className="font-medium">{b.destinationName || "—"}</p>
-                  <p className="text-xs text-gray-400">{b.destinationCountry}</p>
-                </td>
-                <td className="py-3 text-gray-600">
-                  <p>{b.startDate ? new Date(b.startDate).toLocaleDateString("sl-SI") : "—"}</p>
+                  <p className="font-medium">{booking.destinationName || "-"}</p>
                   <p className="text-xs text-gray-400">
-                    → {b.endDate ? new Date(b.endDate).toLocaleDateString("sl-SI") : "—"}
+                    {booking.destinationCountry}
                   </p>
                 </td>
-                <td className="py-3 text-center">{b.guests || 1}</td>
+                <td className="py-3 text-gray-600">
+                  <p>
+                    {booking.startDate
+                      ? new Date(booking.startDate).toLocaleDateString("sl-SI")
+                      : "-"}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    To{" "}
+                    {booking.endDate
+                      ? new Date(booking.endDate).toLocaleDateString("sl-SI")
+                      : "-"}
+                  </p>
+                </td>
+                <td className="py-3 text-center">{booking.guests || 1}</td>
                 <td className="py-3 text-center">
-                  {b.flightIncluded
-                    ? <span className="text-green-600 font-medium">✓</span>
-                    : <span className="text-gray-300">✗</span>}
+                  {booking.flightIncluded ? (
+                    <span className="font-medium text-green-600">Yes</span>
+                  ) : (
+                    <span className="text-gray-400">No</span>
+                  )}
                 </td>
                 <td className="py-3 font-semibold text-gray-800">
-                  €{b.totalPrice?.toLocaleString() || "—"}
+                  EUR {booking.totalPrice?.toLocaleString() || "-"}
                 </td>
                 <td className="py-3">
                   <select
-                    value={b.status}
-                    disabled={loadingId === b._id}
-                    onChange={(e) => handleStatusChange(b._id, e.target.value)}
-                    className={`text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer
-                      focus:outline-none focus:ring-2 focus:ring-primary appearance-none
-                      ${STATUS_COLORS[b.status] || "bg-gray-100"}`}
+                    value={booking.status}
+                    disabled={loadingId === booking._id}
+                    onChange={(e) =>
+                      handleStatusChange(booking._id, e.target.value)
+                    }
+                    className={`appearance-none cursor-pointer rounded-full border-0 px-2 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary ${STATUS_COLORS[booking.status] || "bg-gray-100"}`}
                   >
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
+                    {STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
                     ))}
                   </select>
                 </td>
                 <td className="py-3">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => onEdit(b)}
-                      className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 transition"
+                      onClick={() => onEdit(booking)}
+                      className="rounded-lg p-1.5 text-blue-500 transition hover:bg-blue-50"
                       title="Edit"
                     >
                       <Pencil size={15} />
                     </button>
-                    <InvoiceButton booking={b} />
+                    <InvoiceButton booking={booking} />
                     <button
-                      onClick={() => handleSendEmail(b)}
-                      disabled={sendingEmail === b._id}
-                      className={`p-1.5 rounded-lg transition
-                        ${emailSent === b._id
-                          ? "bg-green-100 text-green-600"
-                          : "hover:bg-blue-50 text-blue-400"}`}
+                      onClick={() => handleSendEmail(booking._id)}
+                      disabled={sendingEmail === booking._id}
+                      className={`rounded-lg p-1.5 transition ${emailSent === booking._id ? "bg-green-100 text-green-600" : "text-blue-400 hover:bg-blue-50"}`}
                       title="Send confirmation email"
                     >
                       <Mail size={15} />
                     </button>
                     <button
-                      onClick={() => setConfirmDelete(b._id)}
-                      className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition"
+                      onClick={() => setConfirmDelete(booking._id)}
+                      className="rounded-lg p-1.5 text-red-500 transition hover:bg-red-50"
                       title="Delete"
                     >
                       <Trash2 size={15} />
@@ -150,18 +194,24 @@ export default function BookingsTable({
       </div>
 
       {confirmDelete && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-sm">
-            <h3 className="text-lg font-semibold mb-2">Delete booking?</h3>
-            <p className="text-sm text-gray-500 mb-6">This action cannot be undone.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="mb-2 text-lg font-semibold">Delete booking?</h3>
+            <p className="mb-6 text-sm text-gray-500">
+              This action cannot be undone.
+            </p>
             <div className="flex gap-3">
-              <button onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2 rounded-xl border text-sm hover:bg-gray-50">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
+              >
                 Cancel
               </button>
-              <button onClick={() => handleDelete(confirmDelete)}
+              <button
+                onClick={() => handleDelete(confirmDelete)}
                 disabled={loadingId === confirmDelete}
-                className="flex-1 px-4 py-2 rounded-xl bg-red-500 text-white text-sm hover:bg-red-600 disabled:opacity-60">
+                className="flex-1 rounded-xl bg-red-500 px-4 py-2 text-sm text-white hover:bg-red-600 disabled:opacity-60"
+              >
                 {loadingId === confirmDelete ? "Deleting..." : "Delete"}
               </button>
             </div>

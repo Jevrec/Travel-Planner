@@ -104,7 +104,9 @@ export default function InvoiceButton({ booking }: { booking: Booking }) {
     });
 
     // Cena
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    const finalY =
+      (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable
+        .finalY + 10;
 
     doc.setFillColor(245, 247, 250);
     doc.roundedRect(120, finalY, 76, 20, 3, 3, "F");

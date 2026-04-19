@@ -2,27 +2,40 @@
 "use server";
 import { client } from "@/sanity/lib/client";
 
+type DashboardBooking = {
+  _id: string;
+  status?: string;
+  totalPrice?: number;
+  createdAt: string;
+  customerName?: string;
+  destinationName?: string;
+};
+
 export async function getDashboardStats() {
   const [bookings, destinations, customers] = await Promise.all([
-    client.fetch(`*[_type == "booking"]{
+    client.fetch<DashboardBooking[]>(`*[_type == "booking"]{
       _id, status, totalPrice, createdAt,
       "customerName": customer->username,
       "destinationName": destination->name
     } | order(createdAt desc)`),
-    client.fetch(`*[_type == "destination"]{ _id, name, country }`),
-    client.fetch(
+    client.fetch<{ _id: string; name?: string; country?: string }[]>(
+      `*[_type == "destination"]{ _id, name, country }`,
+    ),
+    client.fetch<
+      { _id: string; email?: string; username?: string; createdAt?: string }[]
+    >(
       `*[_type == "user" && isAdmin != true]{ _id, email, username, createdAt }`,
     ),
   ]);
 
   const totalRevenue = bookings
-    .filter((b: any) => b.status === "confirmed" || b.status === "completed")
-    .reduce((sum: number, b: any) => sum + (b.totalPrice || 0), 0);
+    .filter((b) => b.status === "confirmed" || b.status === "completed")
+    .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
 
   const thisMonth = new Date();
   thisMonth.setDate(1);
   const bookingsThisMonth = bookings.filter(
-    (b: any) => new Date(b.createdAt) >= thisMonth,
+    (b) => new Date(b.createdAt) >= thisMonth,
   ).length;
 
   // Prihodki po mesecih (zadnjih 6)
@@ -45,7 +58,7 @@ export async function getDashboardStats() {
   };
 }
 
-function getLast6MonthsRevenue(bookings: any[]) {
+function getLast6MonthsRevenue(bookings: DashboardBooking[]) {
   const months = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date();
@@ -66,7 +79,7 @@ function getLast6MonthsRevenue(bookings: any[]) {
   return months;
 }
 
-function getBookingsByDestination(bookings: any[]) {
+function getBookingsByDestination(bookings: DashboardBooking[]) {
   const map: Record<string, number> = {};
   bookings.forEach((b) => {
     const name = b.destinationName || "Unknown";

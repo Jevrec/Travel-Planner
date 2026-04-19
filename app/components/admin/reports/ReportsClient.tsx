@@ -4,7 +4,7 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, Users, ShoppingBag, Percent } from "lucide-react";
+import { TrendingUp, Users, ShoppingBag, Percent, type LucideIcon } from "lucide-react";
 
 const COLORS = ["#3f639e", "#60a5fa", "#34d399", "#f59e0b", "#f87171"];
 
@@ -15,7 +15,29 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "#3f639e",
 };
 
-export default function ReportsClient({ data }: { data: any }) {
+type StatusData = {
+  name: string;
+  value: number;
+};
+
+type TopDestination = {
+  name: string;
+  count: number;
+  revenue: number;
+};
+
+type ReportsData = {
+  revenueByMonth: { month: string; revenue: number }[];
+  bookingsByStatus: StatusData[];
+  topDestinations: TopDestination[];
+  conversionRate: number;
+  avgBookingValue: number;
+  newCustomersByMonth: { month: string; count: number }[];
+  totalCustomers: number;
+  totalBookings: number;
+};
+
+export default function ReportsClient({ data }: { data: ReportsData }) {
   return (
     <div className="space-y-6">
 
@@ -86,7 +108,7 @@ export default function ReportsClient({ data }: { data: any }) {
             <PieChart>
               <Pie data={data.bookingsByStatus} dataKey="value" nameKey="name"
                 cx="50%" cy="50%" outerRadius={80}>
-                {data.bookingsByStatus.map((entry: any, i: number) => (
+                {data.bookingsByStatus.map((entry, i) => (
                   <Cell key={i} fill={STATUS_COLORS[entry.name] || COLORS[i]} />
                 ))}
               </Pie>
@@ -101,7 +123,7 @@ export default function ReportsClient({ data }: { data: any }) {
       <div className="bg-white rounded-2xl p-6 shadow-sm">
         <h2 className="text-lg font-semibold mb-4">Top 5 Destinations by Revenue</h2>
         <div className="space-y-3">
-          {data.topDestinations.map((dest: any, i: number) => {
+          {data.topDestinations.map((dest, i) => {
             const maxRevenue = data.topDestinations[0]?.revenue || 1;
             const pct = Math.round((dest.revenue / maxRevenue) * 100);
             return (
@@ -147,7 +169,7 @@ const STAT_COLORS: Record<string, string> = {
 
 function StatCard({ title, value, icon: Icon, color }: {
   title: string; value: string | number;
-  icon: any; color: string;
+  icon: LucideIcon; color: string;
 }) {
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-4">

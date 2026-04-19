@@ -9,7 +9,20 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "bg-blue-100 text-blue-700",
 };
 
-export default function BookingsTable({ bookings }: { bookings: any[] }) {
+type DashboardBooking = {
+  _id: string;
+  customerName?: string;
+  destinationName?: string;
+  status?: string;
+  totalPrice?: number;
+  createdAt: string;
+};
+
+export default function BookingsTable({
+  bookings,
+}: {
+  bookings: DashboardBooking[];
+}) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"createdAt" | "totalPrice">("createdAt");
@@ -51,7 +64,9 @@ export default function BookingsTable({ bookings }: { bookings: any[] }) {
         </select>
         <select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as any)}
+          onChange={(e) =>
+            setSortBy(e.target.value as "createdAt" | "totalPrice")
+          }
           className="px-3 py-2 rounded-xl border text-sm"
         >
           <option value="createdAt">Sort by Date</option>
@@ -80,7 +95,7 @@ export default function BookingsTable({ bookings }: { bookings: any[] }) {
                 </td>
                 <td className="py-3">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[b.status] || ""}`}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${b.status ? STATUS_COLORS[b.status] || "" : ""}`}
                   >
                     {b.status}
                   </span>

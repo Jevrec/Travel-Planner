@@ -1,4 +1,4 @@
-export default {
+const sentEmail = {
   name: "sentEmail",
   title: "Sent Email",
   type: "document",
@@ -9,3 +9,5 @@ export default {
     { name: "status", title: "Status", type: "string" },
   ],
 };
+
+export default sentEmail;

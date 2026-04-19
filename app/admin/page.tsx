@@ -4,7 +4,7 @@ import KPICard from "../components/admin/KPICard";
 import BookingsTable from "../components/admin/BookingsTable";
 import RevenueChart from "../components/admin/RevenueChart";
 import DestinationPieChart from "../components/admin/DestinationPieChart";
-import { Euro, CalendarCheck, Users, MapPin } from "lucide-react";
+import { Euro, CalendarCheck, Users } from "lucide-react";
 
 export default async function AdminDashboard() {
   const stats = await getDashboardStats();

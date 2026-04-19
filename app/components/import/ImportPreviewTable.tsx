@@ -7,7 +7,7 @@ export default function ImportPreviewTable({
   rows,
   totalRows,
 }: {
-  rows: Record<string, any>[];
+  rows: Record<string, unknown>[];
   totalRows: number;
 }) {
   if (rows.length === 0) return null;

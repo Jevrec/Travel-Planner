@@ -3,7 +3,19 @@
 import { writeClient } from "@/sanity/lib/client";
 import { revalidatePath } from "next/cache";
 
-export async function importDestinations(rows: any[]) {
+type DestinationImportRow = {
+  name?: string | number;
+  country?: string | number;
+  city?: string | number;
+  description?: string | number;
+  pricePerNight?: string | number;
+  rating?: string | number;
+  lat?: string | number;
+  lon?: string | number;
+  tags?: string | number;
+};
+
+export async function importDestinations(rows: DestinationImportRow[]) {
   const results = { success: 0, failed: 0, errors: [] as string[] };
 
   for (const row of rows) {
@@ -20,17 +32,17 @@ export async function importDestinations(rows: any[]) {
         country: String(row.country || ""),
         city: String(row.city || ""),
         description: String(row.description || ""),
-        pricePerNight: parseFloat(row.pricePerNight) || 0,
-        rating: parseFloat(row.rating) || 0,
-        lat: parseFloat(row.lat) || 0,
-        lon: parseFloat(row.lon) || 0,
+        pricePerNight: parseFloat(String(row.pricePerNight ?? "")) || 0,
+        rating: parseFloat(String(row.rating ?? "")) || 0,
+        lat: parseFloat(String(row.lat ?? "")) || 0,
+        lon: parseFloat(String(row.lon ?? "")) || 0,
         tags: row.tags ? String(row.tags).split(",").map((t: string) => t.trim()) : [],
       });
 
       results.success++;
-    } catch (err: any) {
+    } catch (err: unknown) {
       results.failed++;
-      results.errors.push(err.message);
+      results.errors.push(err instanceof Error ? err.message : "Unknown import error");
     }
   }
 
