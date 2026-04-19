@@ -10,10 +10,15 @@ export default auth(async (req) => {
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
-    // Preveri admin flag na user dokumentu v Sanity
+    const sessionUser = req.auth.user as { id?: string; isAdmin?: boolean };
+
+    if (sessionUser.isAdmin) {
+      return NextResponse.next();
+    }
+
     const user = await client.fetch(
       `*[_type == "user" && _id == $id][0]{ isAdmin }`,
-      { id: req.auth.user?.id },
+      { id: sessionUser.id },
     );
 
     if (!user?.isAdmin) {

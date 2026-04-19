@@ -22,7 +22,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Fetch user from Sanity by email
         const user = await client.fetch(
           `*[_type == "user" && email == $email][0]{
-            _id, email, username, password, profileImage
+            _id, email, username, password, profileImage, isAdmin
           }`,
           { email: credentials.email },
         );
@@ -41,6 +41,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: user._id,
           email: user.email,
           name: user.username,
+          isAdmin: Boolean(user.isAdmin),
         };
       },
     }),
@@ -51,6 +52,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
+        token.isAdmin = Boolean(user.isAdmin);
       }
       if (trigger === "update" && session?.name) {
         token.name = session.name;
@@ -62,6 +64,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string;
         session.user.name = token.name as string;
         session.user.email = token.email as string;
+        session.user.isAdmin = Boolean(token.isAdmin);
       }
       return session;
     },

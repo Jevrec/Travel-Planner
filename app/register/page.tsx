@@ -2,12 +2,10 @@
 // app/register/page.tsx
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { registerUser } from "@/app/api/auth/auth";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +22,7 @@ export default function RegisterPage() {
     if (result?.error) {
       setError(result.error);
     }
-    // On success, registerUser auto redirects to /dashboard via signIn
+    // On success, registerUser redirects through NextAuth.
   }
 
   return (
