@@ -23,6 +23,16 @@ type BookingConfirmationTemplateData = Omit<
   bookingId: string;
 };
 
+type CustomerEmailData = {
+  _id: string;
+  username?: string;
+  email?: string;
+};
+
+type SendNewsletterResult =
+  | { error: string }
+  | { success: number; failed: number; errors: string[] };
+
 async function getBookingEmailData(
   bookingId: string,
 ): Promise<BookingEmailData | null> {
@@ -45,25 +55,41 @@ async function getBookingEmailData(
   );
 }
 
-export async function getAllCustomerEmails() {
+export async function getAllCustomerEmails(): Promise<CustomerEmailData[]> {
   return client.fetch(`
     *[_type == "user" && isAdmin != true]{ _id, username, email }
   `);
 }
 
-export async function sendNewsletterEmail(subject: string, message: string) {
+function getResendFromEmail() {
+  return process.env.RESEND_FROM_EMAIL?.trim();
+}
+
+export async function sendNewsletterEmail(
+  subject: string,
+  message: string,
+): Promise<SendNewsletterResult> {
+  if (!process.env.RESEND_API_KEY) {
+    return { error: "RESEND_API_KEY is missing in .env.local." };
+  }
+
+  const from = getResendFromEmail();
+  if (!from) {
+    return { error: "RESEND_FROM_EMAIL is missing in .env.local." };
+  }
+
   const customers = await getAllCustomerEmails();
 
   if (!customers.length) return { error: "No customers found." };
 
-  const results = { success: 0, failed: 0 };
+  const results = { success: 0, failed: 0, errors: [] as string[] };
 
   for (const customer of customers) {
     if (!customer.email) continue;
 
     try {
-      await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || "noreply@traveladmin.com",
+      const { error } = await resend.emails.send({
+        from,
         to: customer.email,
         subject,
         html: `
@@ -72,9 +98,9 @@ export async function sendNewsletterEmail(subject: string, message: string) {
               <h1 style="color: white; margin: 0; font-size: 22px;">TravelAdmin</h1>
             </div>
             <div style="padding: 40px; background: #ffffff;">
-              <p style="color: #1f2937; font-size: 16px;">Hi ${customer.username || "there"},</p>
+              <p style="color: #1f2937; font-size: 16px;">Hi ${escapeHtml(customer.username || "there")},</p>
               <div style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-                ${message.replace(/\n/g, "<br/>")}
+                ${escapeHtml(message).replace(/\n/g, "<br/>")}
               </div>
             </div>
             <div style="background: #f9fafb; padding: 20px 40px; text-align: center;">
@@ -85,9 +111,21 @@ export async function sendNewsletterEmail(subject: string, message: string) {
           </div>
         `,
       });
+
+      if (error) {
+        results.failed++;
+        results.errors.push(`${customer.email}: ${error.message}`);
+        continue;
+      }
+
       results.success++;
-    } catch {
+    } catch (error) {
       results.failed++;
+      results.errors.push(
+        `${customer.email}: ${
+          error instanceof Error ? error.message : "Unknown email error"
+        }`,
+      );
     }
   }
 

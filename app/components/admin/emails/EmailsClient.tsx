@@ -23,7 +23,12 @@ export default function EmailsClient({
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ success?: number; failed?: number; error?: string } | null>(null);
+  const [result, setResult] = useState<{
+    success?: number;
+    failed?: number;
+    errors?: string[];
+    error?: string;
+  } | null>(null);
 
   const handleSend = async () => {
     if (!subject.trim() || !message.trim()) return;
@@ -109,6 +114,21 @@ export default function EmailsClient({
                 ? result.error
                 : `Sent to ${result.success} customers${result.failed ? `, ${result.failed} failed` : ""}.`}
             </p>
+          </div>
+        )}
+
+        {result?.errors && result.errors.length > 0 && (
+          <div className="rounded-xl border border-yellow-100 bg-yellow-50 p-4">
+            <p className="mb-2 text-sm font-medium text-yellow-800">
+              Delivery errors
+            </p>
+            <ul className="space-y-1">
+              {result.errors.slice(0, 5).map((error, index) => (
+                <li key={index} className="text-xs text-yellow-700">
+                  {error}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
