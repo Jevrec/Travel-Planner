@@ -4,6 +4,7 @@ import { client } from "@/sanity/lib/client";
 
 export default auth(async (req) => {
   const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
+  const isUserRoute = req.nextUrl.pathname.startsWith("/user");
 
   if (isAdminRoute) {
     if (!req.auth) {
@@ -26,7 +27,19 @@ export default auth(async (req) => {
     }
   }
 
+  if (isUserRoute) {
+    if (!req.auth) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+
+    const sessionUser = req.auth.user as { isAdmin?: boolean };
+
+    if (sessionUser.isAdmin) {
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+  }
+
   return NextResponse.next();
 });
 
-export const config = { matcher: ["/admin/:path*"] };
+export const config = { matcher: ["/admin/:path*", "/user/:path*"] };

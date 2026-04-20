@@ -57,7 +57,7 @@ export async function registerUser(formData: FormData) {
   await signIn("credentials", {
     email,
     password,
-    redirectTo: "/",
+    redirectTo: "/user",
   });
 
   return { success: true };

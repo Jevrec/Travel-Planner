@@ -9,6 +9,10 @@ export default async function HomePage() {
     redirect("/admin");
   }
 
+  if (session?.user?.id) {
+    redirect("/user");
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-stone-950 text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.22),_transparent_32%),radial-gradient(circle_at_80%_20%,_rgba(251,191,36,0.18),_transparent_22%),linear-gradient(135deg,_#0c1424_0%,_#111827_45%,_#292524_100%)]" />
