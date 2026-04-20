@@ -7,6 +7,7 @@ type BookingEmailData = {
   _id: string;
   customerName: string;
   customerEmail: string;
+  customerProfileImageUrl?: string;
   destinationName: string;
   destinationCountry: string;
   startDate: string;
@@ -27,6 +28,7 @@ type CustomerEmailData = {
   _id: string;
   username?: string;
   email?: string;
+  profileImageUrl?: string;
 };
 
 type SendNewsletterResult =
@@ -47,6 +49,7 @@ async function getBookingEmailData(
         flightIncluded,
         "customerName": customer->username,
         "customerEmail": customer->email,
+        "customerProfileImageUrl": customer->profileImage.asset->url,
         "destinationName": destination->name,
         "destinationCountry": destination->country
       }
@@ -57,7 +60,12 @@ async function getBookingEmailData(
 
 export async function getAllCustomerEmails(): Promise<CustomerEmailData[]> {
   return client.fetch(`
-    *[_type == "user" && isAdmin != true]{ _id, username, email }
+    *[_type == "user" && isAdmin != true]{
+      _id,
+      username,
+      email,
+      "profileImageUrl": profileImage.asset->url
+    }
   `);
 }
 
@@ -98,6 +106,7 @@ export async function sendNewsletterEmail(
               <h1 style="color: white; margin: 0; font-size: 22px;">TravelAdmin</h1>
             </div>
             <div style="padding: 40px; background: #ffffff;">
+              ${getProfileImageHtml(customer.profileImageUrl, customer.username || "Traveler")}
               <p style="color: #1f2937; font-size: 16px;">Hi ${escapeHtml(customer.username || "there")},</p>
               <div style="color: #4b5563; font-size: 14px; line-height: 1.6;">
                 ${escapeHtml(message).replace(/\n/g, "<br/>")}
@@ -152,6 +161,7 @@ export async function sendBookingConfirmation(bookingId: string) {
     guests: booking.guests || 1,
     totalPrice: booking.totalPrice || 0,
     flightIncluded: Boolean(booking.flightIncluded),
+    customerProfileImageUrl: booking.customerProfileImageUrl,
     bookingId: booking._id,
   });
 
@@ -182,6 +192,22 @@ function formatDate(value: string) {
   return new Date(value).toLocaleDateString("sl-SI");
 }
 
+function getProfileImageHtml(imageUrl: string | undefined, altText: string) {
+  if (!imageUrl) return "";
+
+  return `
+    <div style="margin-bottom: 20px;">
+      <img
+        src="${escapeHtml(imageUrl)}"
+        alt="${escapeHtml(altText)}"
+        width="72"
+        height="72"
+        style="display: block; width: 72px; height: 72px; border-radius: 999px; object-fit: cover; border: 3px solid #e5e7eb;"
+      />
+    </div>
+  `;
+}
+
 function getBookingConfirmationHtml(booking: BookingConfirmationTemplateData) {
   const nights = Math.max(
     1,
@@ -210,6 +236,7 @@ function getBookingConfirmationHtml(booking: BookingConfirmationTemplateData) {
             </tr>
             <tr>
               <td style="padding: 40px;">
+                ${getProfileImageHtml(booking.customerProfileImageUrl, booking.customerName)}
                 <p style="font-size: 16px; color: #1f2937; margin-top: 0;">Hi <strong>${customerName}</strong>,</p>
                 <p style="font-size: 14px; color: #6b7280;">Your booking has been confirmed! Here are your trip details:</p>
                 <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f7fa; border-radius: 12px; padding: 24px; margin-top: 24px;">
