@@ -1,5 +1,6 @@
 import { getBookingsForUser, getUserTravelStats } from "@/app/actions/bookings";
 import { getDestinations } from "@/app/actions/destinations";
+import { getDestinationImageUrl } from "@/app/components/user/destinationImages";
 import UserStatCard from "@/app/components/user/UserStatCard";
 import { auth } from "@/lib/auth";
 import { CalendarCheck, Compass, Euro, Plane } from "lucide-react";
@@ -114,16 +115,14 @@ export default async function UserDashboardPage() {
                   className="overflow-hidden rounded-xl border border-slate-200 transition hover:-translate-y-0.5 hover:shadow-md"
                 >
                   <div className="h-36 bg-slate-100">
-                    {destination.imageUrl ? (
-                      <Image
-                        src={destination.imageUrl}
-                        alt={destination.name || "Destination"}
-                        width={320}
-                        height={220}
-                        unoptimized
-                        className="h-full w-full object-cover"
-                      />
-                    ) : null}
+                    <Image
+                      src={getDestinationImageUrl(destination)}
+                      alt={destination.name || "Destination"}
+                      width={320}
+                      height={220}
+                      unoptimized
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                   <div className="p-4">
                     <h3 className="font-bold text-slate-950">

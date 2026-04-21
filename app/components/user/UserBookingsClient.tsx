@@ -4,6 +4,7 @@ import { cancelUserBooking } from "@/app/actions/bookings";
 import { CalendarDays, Plane, Users } from "lucide-react";
 import Image from "next/image";
 import { useState, useTransition } from "react";
+import { getDestinationImageUrl } from "./destinationImages";
 
 export type UserBooking = {
   _id: string;
@@ -97,20 +98,14 @@ export default function UserBookingsClient({
           >
             <div className="grid md:grid-cols-[220px_1fr]">
               <div className="h-48 bg-slate-100 md:h-full">
-                {booking.destinationImageUrl ? (
-                  <Image
-                    src={booking.destinationImageUrl}
-                    alt={booking.destinationName || "Destination"}
-                    width={440}
-                    height={320}
-                    unoptimized
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                    No image
-                  </div>
-                )}
+                <Image
+                  src={getDestinationImageUrl(booking)}
+                  alt={booking.destinationName || "Destination"}
+                  width={440}
+                  height={320}
+                  unoptimized
+                  className="h-full w-full object-cover"
+                />
               </div>
 
               <div className="p-5">

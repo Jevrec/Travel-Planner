@@ -4,6 +4,7 @@ import { Search, SlidersHorizontal, Star } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import BookingForm from "./BookingForm";
+import { getDestinationImageUrl } from "./destinationImages";
 
 export type UserDestination = {
   _id: string;
@@ -96,20 +97,14 @@ export default function DestinationCatalog({
             >
               <div className="grid md:grid-cols-[220px_1fr]">
                 <div className="h-56 bg-slate-100 md:h-full">
-                  {destination.imageUrl ? (
-                    <Image
-                      src={destination.imageUrl}
-                      alt={destination.name || "Destination"}
-                      width={440}
-                      height={360}
-                      unoptimized
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                      No image
-                    </div>
-                  )}
+                  <Image
+                    src={getDestinationImageUrl(destination)}
+                    alt={destination.name || "Destination"}
+                    width={440}
+                    height={360}
+                    unoptimized
+                    className="h-full w-full object-cover"
+                  />
                 </div>
 
                 <div className="p-5">
